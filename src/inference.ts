@@ -57,7 +57,12 @@ export async function predict(config: InferenceConfg, callback?: ProgressCallbac
 	const noiseW = modelConfig.inference.noise_w;
 
 	const modelBlob = await getBlob(`${HF_BASE}/${path}`, callback);
-	const session = await ort.InferenceSession.create(await modelBlob.arrayBuffer());
+
+	const modelArrayBuffer = await modelBlob.arrayBuffer();
+	const session = await ort.InferenceSession.create(modelArrayBuffer, {
+		executionProviders: navigator.gpu ? ['webgpu'] : undefined,
+	});
+
 	const feeds = {
 		input: new ort.Tensor('int64', phonemeIds, [1, phonemeIds.length]),
 		input_lengths: new ort.Tensor('int64', [phonemeIds.length]),
